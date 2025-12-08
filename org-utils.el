@@ -1,7 +1,14 @@
-;;; org-utils.el
+;;; org-utils.el --- Useful tools for working with orgmode documents
+;;
 ;; Author: Diacus Magnuz <diacus.magnuz@gmail.com>
+;; URL: https://github.com/diacus/org-utils
 ;; Version: 0.0.1
-;;; Commentary: A simple package with useful tools for working with orgmode documents
+;; Package-Requires: ((emacs "29.1") (org "9.7.11"))
+;; Keywords: orgmode
+;;; Commentary:
+;;
+;; Org-utils is a simple package with useful tools for working with orgmode documents
+;;
 ;;; Code:
 
 (defun org-utils/copy-property-value (property-name)
