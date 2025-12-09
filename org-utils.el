@@ -89,7 +89,7 @@ Supports wildcard patterns (e.g. ca*.org) that can be expanded."
 		 (mapconcat #'file-name-nondirectory result ", "))))
 
 
-(defun org-tools/restore-org-agenda-files ()
+(defun org-utils/restore-org-agenda-files ()
   "Restores `org-agenda-files` to the value set in `custom-file`.
 This is equivalent to revert any temporal change made by the user
 in the current session."
