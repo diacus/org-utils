@@ -100,5 +100,5 @@ in the current session."
 	    (message "org-agenda-files value restored from custom.el"))
 	(message "org-agenda-files isn't customized in custom.el")))
   
-(provide org-utils)
+(provide 'org-utils)
 ;;; org-utils.el ends here
