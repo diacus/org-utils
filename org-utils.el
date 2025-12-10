@@ -1,4 +1,4 @@
-;;; org-utils.el --- Useful tools for working with orgmode documents
+;;; org-utils.el --- Useful tools for working with orgmode documents -*- lexical-binding: t; -*-
 ;;
 ;; Author: Diacus Magnuz <diacus.magnuz@gmail.com>
 ;; URL: https://github.com/diacus/org-utils
@@ -24,7 +24,9 @@
 
 
 (defun org-utils/browse-property-url (property-name)
-  "Reads the value of PROPERTY-NAME property of the current Org item, if it is a valid URL opens it using the default web browser."
+  "Spawns the browser to the url at PROPERTY-NAME.
+Reads the value of PROPERTY-NAME property of the current Org item, if
+it is a valid URL opens it using the default web browser."
   (interactive "MPROPERTY: ")
   (let ((url (org-entry-get nil property-name)))
     (if url
@@ -33,8 +35,9 @@
 
 
 (defun org-utils/set-org-agenda-files ()
-  "Sets `org-agenda-files' selecting multiple files .org/.org.gpg.
-Excludes backups. Uses ':' as separator like `org-set-tags-command' does.
+  "Update `org-agenda-files' variable.
+Presents multiple ptions of files .org/.org.gpg excluding backups.
+Uses ':' as separator like `org-set-tags-command' does.
 Supports wildcard patterns (e.g. ca*.org) that can be expanded."
   (interactive)
   (require 'crm)
@@ -90,7 +93,7 @@ Supports wildcard patterns (e.g. ca*.org) that can be expanded."
 
 
 (defun org-utils/restore-org-agenda-files ()
-  "Restores `org-agenda-files` to the value set in `custom-file`.
+  "Restore `org-agenda-files` to the value set in `custom-file`.
 This is equivalent to revert any temporal change made by the user
 in the current session."
   (interactive)
