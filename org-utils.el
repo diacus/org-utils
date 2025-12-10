@@ -12,23 +12,36 @@
 ;;; Code:
 (require 'org)
 
-(defun org-utils/copy-property-value (property-name)
+(defun org-utils/copy-property-value ()
   "Copies the value of PROPERTY-NAME property of the current Org item."
-  (interactive "MPROPERTY: ")
-  (let ((value (org-entry-get nil property-name)))
+  (interactive)
+  (let* ((props (org-entry-properties nil))
+         (prop-names (mapcar #'car props))
+         (property-name
+          (completing-read
+           "Property: "
+           prop-names nil t))
+         (value (org-entry-get nil property-name)))
     (if value
-	(progn
-	  (kill-new value)
-	  (message "Copied value: %s" value))
+        (progn
+          (kill-new value)
+          (message "Copied value: %s" value))
       (message "Property '%s' not found" property-name))))
 
 
-(defun org-utils/browse-property-url (property-name)
+(defun org-utils/browse-property-url ()
   "Spawns the browser to the url at PROPERTY-NAME.
 Reads the value of PROPERTY-NAME property of the current Org item, if
 it is a valid URL opens it using the default web browser."
-  (interactive "MPROPERTY: ")
-  (let ((url (org-entry-get nil property-name)))
+  "Copies the value of PROPERTY-NAME property of the current Org item."
+  (interactive)
+  (let* ((props (org-entry-properties nil))
+         (prop-names (mapcar #'car props))
+         (property-name
+          (completing-read
+           "Property: "
+           prop-names nil t))
+         (url (org-entry-get nil property-name)))
     (if url
 	(browse-url url)
       (message "Property '%s' not found" property-name))))
