@@ -33,7 +33,6 @@
   "Spawns the browser to the url at PROPERTY-NAME.
 Reads the value of PROPERTY-NAME property of the current Org item, if
 it is a valid URL opens it using the default web browser."
-  "Copies the value of PROPERTY-NAME property of the current Org item."
   (interactive)
   (let* ((props (org-entry-properties nil))
          (prop-names (mapcar #'car props))
