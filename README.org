@@ -1,0 +1,161 @@
+#+TITLE: org-utils
+#+AUTHOR: Diacus Magnuz
+#+EMAIL: diacus.magnuz@gmail.com
+#+OPTIONS: overview
+
+* Overview
+
+org-utils is an Emacs Lisp package providing utility functions for
+working with org-mode documents. It offers convenient commands for
+property manipulation, agenda file management, and date/time
+arithmetic.
+
+* Installation
+
+** Quelpa (Recommended)
+
+Using [[https://github.com/quelpa/quelpa][quelpa-use-package]]:
+
+#+begin_src emacs-lisp
+  (use-package org-utils
+    :quelpa (org-utils :fetcher github :repo "diacus/org-utils"))
+#+end_src
+
+** Manual Installation
+
+Download =org-utils.el= and place it in your =load-path=, then:
+
+#+begin_src emacs-lisp
+  (require 'org-utils)
+#+end_src
+
+* Requirements
+
+- Emacs 29.1+
+- Org mode 9.5+
+- cl-lib 0.7+
+
+* Commands
+
+** Property Operations
+
+*** ~org-utils/copy-property-value~
+
+Interactively copy a property value from the current Org heading to the kill ring.
+
+- Prompts for property name with completion from existing properties
+- Copies the value to the kill ring
+- Displays confirmation message
+
+*** ~org-utils/browse-property-url~
+
+Open a URL stored in a property using the default browser.
+
+- Prompts for property name with completion
+- Opens the URL in your default browser
+- Useful for =URL:=, =WEBSITE:=, or similar link properties
+
+** Agenda File Management
+
+*** ~org-utils/set-org-agenda-files~
+
+Interactively set =org-agenda-files= with completion and wildcard support.
+
+Features:
+- Uses =org-directory= as base directory (prompts if not set)
+- Supports wildcards (e.g., =ca*.org=)
+- Supports encrypted files (=.org.gpg=)
+- Supports directory selection (recursively includes all org files)
+- Uses =:= as separator for multiple entries
+
+Example usage:
+- =projects.org:=work.org= — select two specific files
+- =work/= — include all org files in the work directory
+- =2024-*.org= — include all files matching the pattern
+
+*** ~org-utils/restore-org-agenda-files~
+
+Restore =org-agenda-files= to the value saved in your =custom-file=.
+
+Useful for reverting temporary changes made during the current session.
+
+** Date/Time Utilities
+
+*** ~org-utils/scheduled-monthly-dates~
+
+Generate N monthly dates starting from the current heading's SCHEDULED timestamp.
+
+Arguments:
+- =n= :: Number of dates to generate
+
+Returns a list of date strings in =YYYY-MM-DD= format.
+
+Example: If a heading is scheduled for 2024-01-15, calling with =n=3= returns:
+#+begin_src emacs-lisp
+  ("2024-01-15" "2024-02-15" "2024-03-15")
+#+end_src
+
+The function handles month-end clamping (e.g., Jan 31 → Feb 28/29).
+
+* Time Arithmetic Functions
+
+These functions are useful for programmatic date/time manipulation.
+
+** ~org-utils/get-entry-scheduled~
+
+Parse the SCHEDULED value of the current org element and return it as a time value.
+
+** ~org-utils/add-months~
+
+Add N months to a time value, clamping to the last day of the target month.
+
+#+begin_src emacs-lisp
+  ;; Add 3 months to a date
+  (org-utils/add-months (current-time) 3)
+#+end_src
+
+** ~org-utils/make-timedelta~
+
+Create a timedelta in seconds from a plist of time components.
+
+#+begin_src emacs-lisp
+  ;; Create a timedelta of 2 days, 3 hours, 30 minutes
+  (org-utils/make-timedelta :days 2 :hours 3 :minutes 30)
+#+end_src
+
+Note: =:months= is not supported because months have variable lengths. Use ~org-utils/add-timedelta~ for month arithmetic.
+
+** ~org-utils/add-timedelta~
+
+Add a timedelta to a time value, supporting months.
+
+#+begin_src emacs-lisp
+  ;; Add 2 months and 3 days to a time
+  (org-utils/add-timedelta (current-time) :months 2 :days 3)
+#+end_src
+
+** ~org-utils/format-active-timestamp~
+
+Format a time value as an active Org timestamp.
+
+#+begin_src emacs-lisp
+  ;; Returns: <2024-03-15 Fri>
+  (org-utils/format-active-timestamp (current-time))
+#+end_src
+
+** ~org-utils/format-inactive-timestamp~
+
+Format a time value as an inactive Org timestamp.
+
+#+begin_src emacs-lisp
+  ;; Returns: [2024-03-15 Fri]
+  (org-utils/format-inactive-timestamp (current-time))
+#+end_src
+
+* License
+
+GNU General Public License v3.0 or later. See [[https://www.gnu.org/licenses/gpl-3.0.html][GPL-3.0]].
+
+* Contributing
+
+Contributions are welcome! Please submit patches via [[https://github.com/diacus/org-utils][GitHub]].
