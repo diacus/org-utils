@@ -35,6 +35,20 @@ Download =org-utils.el= and place it in your =load-path=, then:
 - Org mode 9.5+
 - cl-lib 0.7+
 
+* Running Tests
+
+The test suite uses ERT (Emacs Lisp Regression Testing). To run the tests:
+
+#+begin_src shell
+  emacs -Q --batch -L . -l org-utils-test.el -f ert-run-tests-batch-and-exit
+#+end_src
+
+Or interactively in Emacs:
+
+#+begin_src emacs-lisp
+  (load-file "org-utils-test.el")
+  (ert-run-tests-interactively "org-utils-test")
+#+end_src
 * Commands
 
 ** Property Operations
@@ -159,3 +173,4 @@ GNU General Public License v3.0 or later. See [[https://www.gnu.org/licenses/gpl
 * Contributing
 
 Contributions are welcome! Please submit patches via [[https://github.com/diacus/org-utils][GitHub]].
+
