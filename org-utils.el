@@ -13,6 +13,9 @@
 (require 'org)
 (require 'calendar)
 
+;; Declare crm-separator as dynamic variable for completing-read-multiple
+(defvar crm-separator)
+
 
 (defun org-utils/copy-property-value ()
   "Copies the value of PROPERTY-NAME property of the current Org item."
@@ -212,6 +215,98 @@ TIME must be a time value as returned by `encode-time' or
              for adjusted-day = (min day last-day)
              for new-time = (encode-time 0 0 0 adjusted-day adjusted-month adjusted-year)
              collect (format-time-string "%Y-%m-%d" new-time))))
-  
+
+(defun org-utils/convert-markdown-buffer-to-org ()
+  "Convert the current buffer from Markdown to Org mode using pure Elisp.
+Does not require pandoc or external command line utilities."
+  (interactive)
+  (undo-boundary)
+  (save-excursion
+    (goto-char (point-min))
+
+    ;; 1. Convert Headers (### to ***)
+    ;; Run in reverse order (deepest headers first) to prevent partial matching
+    ;; Use temporary markers to avoid conflict with list processing
+    (dotimes (i 6)
+      (let ((level (- 6 i)))
+        (goto-char (point-min))
+        (let ((md-header (concat "^\\(" (make-string level ?#) "\\) \\(.+\\)$")))
+          (while (re-search-forward md-header nil t)
+            (replace-match (concat "HEADING" (number-to-string level) " \\2") t nil nil 0)))))
+
+    ;; 2. Convert Bold (**text** or __text__ to *text*)
+    ;; Use placeholder to avoid conflict with italic processing
+    (goto-char (point-min))
+    (while (re-search-forward "\\*\\*\\([^\n]+?\\)\\*\\*" nil t)
+      (replace-match "BOLD\\1BOLD" t nil nil 0))
+    (goto-char (point-min))
+    (while (re-search-forward "__\\([^\n]+?\\)__" nil t)
+      (replace-match "BOLD\\1BOLD" t nil nil 0))
+
+    ;; 3. Convert Italics (*text* or _text_ to /text/)
+    ;; Only match when surrounded by whitespace/punctuation (word boundaries)
+    (goto-char (point-min))
+    (while (re-search-forward "\\([ \t(]\\)\\*\\([^\n*]+\\)\\*\\([ \t).,;:!?]\\)" nil t)
+      (replace-match "\\1/\\2/\\3"))
+    (goto-char (point-min))
+    (while (re-search-forward "\\([ \t(]\\)_\\([^\n_]+\\)_\\([ \t).,;:!?]\\)" nil t)
+      (replace-match "\\1/\\2/\\3"))
+
+    ;; 4. Expand bold markers to org format
+    (goto-char (point-min))
+    (while (re-search-forward "BOLD\\([^\n]+?\\)BOLD" nil t)
+      (replace-match "*\\1*"))
+
+    ;; 5. Convert Unordered Lists (-, +, or * to -)
+    ;; Do this BEFORE heading expansion so headers don't get caught
+    (goto-char (point-min))
+    (while (re-search-forward "^\\([ \t]*\\)[*+-] \\(.+\\)$" nil t)
+      (replace-match "\\1- \\2"))
+
+    ;; 6. Expand heading markers
+    ;; Process in reverse order (h6 to h1)
+    (dotimes (i 6)
+      (let ((level (- 6 i)))
+        (goto-char (point-min))
+        (let ((heading-marker (concat "^HEADING" (number-to-string level) " \\(.+\\)$")))
+          (while (re-search-forward heading-marker nil t)
+            (replace-match (concat (make-string level ?*) " \\1") t nil nil 0)))))
+
+    ;; 7. Convert Fenced Code Blocks (```lang to #+begin_src lang)
+    (goto-char (point-min))
+    (let ((in-block nil)
+          (lang nil))
+      (while (re-search-forward "^\\(```\\)\\([a-z]*\\)$" nil t)
+        (if in-block
+            (progn
+              (replace-match "#+end_src")
+              (setq in-block nil))
+          (setq lang (match-string 2))
+          (replace-match (if (string-empty-p lang)
+                             "#+begin_src"
+                           (concat "#+begin_src " lang)))
+          (setq in-block t))))
+
+    ;; 8. Convert Inline Code (`code` to ~code~)
+    (goto-char (point-min))
+    (while (re-search-forward "`\\([^`\n]+\\)`" nil t)
+      (replace-match "~\\1~"))
+
+    ;; 9. Convert Links ([text](url) to [[url][text]])
+    ;; Supports optional title: [text](url "title")
+    (goto-char (point-min))
+    (while (re-search-forward "\\[\\([^]]+\\)\\](\\([^) \t]+\\)\\(?:[ \t]+\"[^\"]*\"\\)?)" nil t)
+      (replace-match "[[\\2][\\1]]"))
+
+    ;; 10. Convert Ordered Lists (1. text to 1. text - already compatible)
+    ;; No change needed, but ensure proper spacing
+    (goto-char (point-min))
+    (while (re-search-forward "^\\([ \t]*\\)\\([0-9]+\\)\\.\\([ \t]*\\)" nil t)
+      (replace-match "\\1\\2. "))
+
+    ;; Switch buffer major mode to Org
+    (org-mode)
+    (message "Buffer successfully converted to Org mode!")))
+
 (provide 'org-utils)
 ;;; org-utils.el ends here

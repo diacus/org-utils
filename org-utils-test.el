@@ -215,6 +215,140 @@
     (should (= (decoded-time-year decoded) 2026))))
 
 
+;;;; Markdown to Org conversion tests
+
+(ert-deftest org-utils-test-convert-headers ()
+  "Test conversion of Markdown headers to Org."
+  (with-temp-buffer
+    (insert "# Heading 1\n## Heading 2\n### Heading 3\n")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "^\\* Heading 1$" (buffer-string)))
+    (should (string-match-p "^\\*\\* Heading 2$" (buffer-string)))
+    (should (string-match-p "^\\*\\*\\* Heading 3$" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-bold-double-asterisk ()
+  "Test conversion of **bold** text."
+  (with-temp-buffer
+    (insert "This is **bold** text.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "This is \\*bold\\* text" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-bold-underscore ()
+  "Test conversion of __bold__ text."
+  (with-temp-buffer
+    (insert "This is __bold__ text.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "This is \\*bold\\* text" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-italic-asterisk ()
+  "Test conversion of *italic* text with asterisk."
+  (with-temp-buffer
+    (insert "This is *italic* text.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "This is /italic/ text" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-italic-underscore ()
+  "Test conversion of _italic_ text with underscore."
+  (with-temp-buffer
+    (insert "This is _italic_ text.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "This is /italic/ text" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-italic-word-boundary ()
+  "Test that _word_ inside other text is NOT converted."
+  (with-temp-buffer
+    (insert "This is my_variable_name here.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "my_variable_name" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-inline-code ()
+  "Test conversion of `inline code`."
+  (with-temp-buffer
+    (insert "Use `function_name()` for this.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "Use ~function_name()~ for this" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-fenced-code-block-with-lang ()
+  "Test conversion of fenced code block with language."
+  (with-temp-buffer
+    (insert "```python\ndef hello():\n    pass\n```")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "#\\+begin_src python" (buffer-string)))
+    (should (string-match-p "#\\+end_src" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-fenced-code-block-no-lang ()
+  "Test conversion of fenced code block without language."
+  (with-temp-buffer
+    (insert "```\nsome code\n```")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "^#\\+begin_src$" (buffer-string)))
+    (should (string-match-p "^#\\+end_src$" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-link-simple ()
+  "Test conversion of [text](url) to [[url][text]]."
+  (with-temp-buffer
+    (insert "See [example](https://example.com) here.")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "\\[\\[https://example.com\\]\\[example\\]\\]" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-link-with-title ()
+  "Test that link titles are stripped during conversion."
+  (with-temp-buffer
+    (insert "[text](https://example.com \"title\")")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "\\[\\[https://example.com\\]\\[text\\]\\]" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-unordered-list-dash ()
+  "Test conversion of - unordered list items."
+  (with-temp-buffer
+    (insert "- Item one\n- Item two")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "^- Item one$" (buffer-string)))
+    (should (string-match-p "^- Item two$" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-unordered-list-asterisk ()
+  "Test conversion of * unordered list items."
+  (with-temp-buffer
+    (insert "* Item one\n* Item two")
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "^- Item one$" (buffer-string)))
+    (should (string-match-p "^- Item two$" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-ordered-list ()
+  "Test that ordered lists maintain proper spacing."
+  (with-temp-buffer
+    (insert "1. First\n2.Second")  ;; second has no space
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (string-match-p "^1\\. First$" (buffer-string)))
+    ;; Note: items without space after '.' aren't recognized as lists
+    (should (string-match-p "2\\. Second" (buffer-string)))))
+
+(ert-deftest org-utils-test-convert-complex-document ()
+  "Test conversion of a complex multi-element document."
+  (with-temp-buffer
+    (insert "# Title\n\nSome **bold** and _italic_ text.\n\n")
+    (insert "```elisp\n(message \"hello\")\n```\n\n")
+    (insert "- List item 1\n- List item 2\n\n")
+    (insert "See [link](https://example.com).\n")
+    (org-utils/convert-markdown-buffer-to-org)
+    (let ((result (buffer-string)))
+      (should (string-match-p "^\\* Title$" result))
+      (should (string-match-p "\\*bold\\*" result))
+      (should (string-match-p "/italic/" result))
+      (should (string-match-p "#\\+begin_src elisp" result))
+      (should (string-match-p "#\\+end_src" result))
+      (should (string-match-p "^- List item" result))
+      (should (string-match-p "\\[\\[https://example.com\\]\\[link\\]\\]" result)))))
+
+(ert-deftest org-utils-test-convert-sets-org-mode ()
+  "Test that conversion sets the buffer to org-mode."
+  (with-temp-buffer
+    (insert "# Title\n")
+    (text-mode)  ; Start with a different mode
+    (org-utils/convert-markdown-buffer-to-org)
+    (should (eq major-mode 'org-mode))))
+
+
 (provide 'org-utils-test)
 
 ;;; org-utils-test.el ends here
